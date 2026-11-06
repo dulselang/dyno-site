@@ -1,0 +1,118 @@
+/* skins.css: the alternative look. The owner likes Modern (style.css alone) and Win95 (this file) the most,
+   2026-11-05; which one is the default isn't decided. Two others that were tried are parked in
+   looks/retired-skins.css.
+
+   A look is picked with the 'Look' buttons in the top bar (dyno.js), or ?skin=win95 in the address. It sets
+   data-skin on <html>. A skin only restyles: tokens first, then component rules. It never changes the layout
+   grid, so the phone behaviour in style.css still holds. It has one fixed palette and ignores light/dark.
+   The token selector is doubled (:root:root) so it beats the dark block in style.css.
+   See HANDOFF.md "Looks". */
+
+/* the switcher itself, in every look */
+.skins { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.skins .armbtn { font-size: 11px; padding: 2px 7px; }
+.bar .skins { margin-left: auto; }
+
+/* =====================================================================================================
+   "win95": a grey bevelled window on a teal desktop.
+   The vocabulary, so new pieces match:
+     raised   border-color: #fff #404040 #404040 #fff   buttons, the window, column headers
+     sunken   border-color: #808080 #fff #fff #808080   anything you read data in: tables, charts, tickets
+     group    border: 2px groove #fff                   a box around related things: cards, the four steps
+     title    navy to blue gradient, white bold text    the page's bar, each demo, each task block
+   ===================================================================================================== */
+:root:root[data-skin="win95"] {
+  --bg: #008080; --panel: #ffffff; --fg: #000000; --muted: #404040; --rule: #808080;
+  --accent: #000080; --arm-c: #0000a8; --arm-d: #a85400;
+  --ok: #008000; --bad: #a80000; --nd: #808080; --deg: #a8a800;
+  --display: Tahoma, "MS Sans Serif", Verdana, Geneva, sans-serif;
+  --body: Tahoma, "MS Sans Serif", Verdana, Geneva, sans-serif;
+  --mono: Tahoma, "MS Sans Serif", Verdana, Geneva, sans-serif;   /* data is in the system face too; real monospace only where text is typed */
+  color-scheme: light;
+}
+[data-skin="win95"] body { font-size: 14px; line-height: 1.45; }
+[data-skin="win95"] blockquote.ticket2, [data-skin="win95"] code, [data-skin="win95"] pre, [data-skin="win95"] .events { font-family: "Lucida Console", "Courier New", Courier, monospace; }
+[data-skin="win95"] code { font-size: 0.92em; }
+
+/* the window */
+[data-skin="win95"] .wrap { background: #c0c0c0; margin: 10px auto; border: 2px solid; border-color: #ffffff #404040 #404040 #ffffff; box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #dfdfdf; padding-bottom: 0; }
+@media (max-width: 700px) { [data-skin="win95"] .wrap { margin: 0; } }
+
+/* title bar, then the nav as a menu bar on its own row */
+[data-skin="win95"] .bar { background: linear-gradient(90deg, #000080, #1084d0); margin-inline: -16px; padding: 4px 16px 0; border-bottom: 0; gap: 4px 12px; align-items: center; }
+[data-skin="win95"] .brand, [data-skin="win95"] .brand a, [data-skin="win95"] .brand span { color: #ffffff; }
+[data-skin="win95"] .brand { font-size: 15px; font-weight: bold; letter-spacing: 0; }
+[data-skin="win95"] .skins { color: #ffffff; }
+[data-skin="win95"] .bar::after { content: "\00d7"; order: 5; width: 18px; height: 16px; line-height: 13px; text-align: center; font-weight: bold; font-size: 14px; color: #000;
+  background: #c0c0c0; border: 2px solid; border-color: #ffffff #404040 #404040 #ffffff; }
+[data-skin="win95"] .bar nav { order: 10; flex-basis: calc(100% + 32px); background: #c0c0c0; margin: 4px -16px 0; padding: 2px 10px; gap: 0; font-size: 13px; border-bottom: 1px solid #808080; box-shadow: 0 1px 0 #ffffff; }
+[data-skin="win95"] .bar nav a { color: #000000; padding: 2px 8px; text-decoration: none; }
+[data-skin="win95"] .bar nav a::first-letter { text-decoration: underline; }
+[data-skin="win95"] .bar nav a:hover, [data-skin="win95"] .bar nav a:focus-visible { background: #000080; color: #ffffff; }
+
+/* type */
+[data-skin="win95"] h1, [data-skin="win95"] h2, [data-skin="win95"] h3 { font-weight: bold; letter-spacing: 0; line-height: 1.2; }
+[data-skin="win95"] .hero h1, [data-skin="win95"] .pagehead h1 { font-size: clamp(24px, 4vw, 34px); }
+[data-skin="win95"] .hero h1 em { color: #000080; }
+[data-skin="win95"] .demohead h2 { font-size: clamp(22px, 3.5vw, 28px); }
+[data-skin="win95"] h2 { font-size: 22px; } [data-skin="win95"] h3 { font-size: 15px; }
+[data-skin="win95"] .hero .lede, [data-skin="win95"] .demohead .oneline, [data-skin="win95"] .profile .blurb, [data-skin="win95"] .pagehead .lede { font-size: 15px; }
+[data-skin="win95"] .eyebrow { text-transform: none; letter-spacing: 0; font-weight: bold; font-size: 12px; color: #000; }
+[data-skin="win95"] .src, [data-skin="win95"] .cap, [data-skin="win95"] .crumb { color: #404040; font-size: 12px; }
+[data-skin="win95"] table a, [data-skin="win95"] .card a, [data-skin="win95"] .crumb a { color: #000080; text-decoration: underline; border-bottom: 0; }
+[data-skin="win95"] :focus-visible { outline: 1px dotted #000000; outline-offset: -4px; }
+
+/* each demo and each task block is a window of its own */
+[data-skin="win95"] section.demo, [data-skin="win95"] section.taskblock { border: 2px solid; border-color: #ffffff #404040 #404040 #ffffff; padding: 0 12px 12px; margin-top: 26px; }
+[data-skin="win95"] section.demo .demohead .eyebrow, [data-skin="win95"] section.taskblock > header { background: linear-gradient(90deg, #000080, #1084d0); color: #ffffff; margin: 0 -12px 10px; padding: 4px 10px; }
+[data-skin="win95"] section.taskblock > header h2, [data-skin="win95"] section.taskblock > header p { color: #ffffff; font-size: 14px; }
+[data-skin="win95"] section, [data-skin="win95"] .profile { border-top: 2px groove #ffffff; }
+
+/* raised: buttons */
+[data-skin="win95"] .btn, [data-skin="win95"] .armbtn, [data-skin="win95"] .morelink {
+  background: #c0c0c0; color: #000; border: 2px solid; border-color: #ffffff #404040 #404040 #ffffff; border-radius: 0;
+  font-family: var(--body); font-size: 13px; font-weight: bold; letter-spacing: 0; padding: 4px 14px; text-decoration: none; }
+[data-skin="win95"] .btn.primary { outline: 1px solid #000; }
+[data-skin="win95"] .btn:active, [data-skin="win95"] .morelink:active { border-color: #404040 #ffffff #ffffff #404040; }
+[data-skin="win95"] .armbtn { font-weight: normal; padding: 2px 9px; font-size: 12px; }
+[data-skin="win95"] .armbtn[aria-pressed="true"] { border-color: #404040 #ffffff #ffffff #404040; background: #dcdcdc; font-weight: bold; }
+[data-skin="win95"] .skins .armbtn { font-size: 11px; padding: 1px 6px; }
+
+/* sunken: tables, charts, tickets */
+[data-skin="win95"] table.board, [data-skin="win95"] table.matrix, [data-skin="win95"] table.grid, [data-skin="win95"] table.cells, [data-skin="win95"] table.runs {
+  background: #ffffff; border: 2px solid; border-color: #808080 #ffffff #ffffff #808080; }
+[data-skin="win95"] table thead th { background: #c0c0c0; border: 2px solid !important; border-color: #ffffff #808080 #808080 #ffffff !important; font-size: 12px; font-weight: bold; }
+[data-skin="win95"] table td, [data-skin="win95"] table tbody th { border-bottom: 1px solid #dfdfdf; }
+[data-skin="win95"] table td small, [data-skin="win95"] table th small { font-size: 11px; color: #404040; }
+[data-skin="win95"] .gridwrap { border: 0; background: none; }
+[data-skin="win95"] .chart, [data-skin="win95"] blockquote.ticket2, [data-skin="win95"] .ticket, [data-skin="win95"] .card pre, [data-skin="win95"] .events {
+  background: #ffffff; border: 2px solid; border-color: #808080 #ffffff #ffffff #808080; }
+[data-skin="win95"] .chart text { font-size: 10.5px; }
+[data-skin="win95"] .rigvideo { border: 2px solid; border-color: #808080 #ffffff #ffffff #808080; }
+[data-skin="win95"] .lvlbar i, [data-skin="win95"] .dots i, [data-skin="win95"] .arm .who { border-radius: 0; }
+[data-skin="win95"] .lvlbar i { background: #ffffff; box-shadow: inset 1px 1px 0 #808080; }
+[data-skin="win95"] .lvlbar i.on, [data-skin="win95"] .lvlbar.top i.on { background: #000080; box-shadow: none; }
+[data-skin="win95"] .ladder .rung > .l { border-right-color: #808080; }
+
+/* group boxes */
+[data-skin="win95"] .how { background: none; border: 0; gap: 8px; }
+[data-skin="win95"] .how > div, [data-skin="win95"] .card, [data-skin="win95"] .simcard, [data-skin="win95"] .runcard, [data-skin="win95"] .tkcard { background: #c0c0c0; border: 2px groove #ffffff; }
+[data-skin="win95"] .tkcard { padding: 10px 12px; }
+[data-skin="win95"] .chip { border-radius: 0; background: #c0c0c0; border: 1px solid #808080; font-size: 11px; }
+[data-skin="win95"] .chip.win { border-color: #000080; color: #000080; font-weight: bold; }
+[data-skin="win95"] .breaks { border-left: 3px solid #a80000; }
+[data-skin="win95"] .tip { background: #ffffe1; color: #000; border: 1px solid #000; border-radius: 0; }
+
+/* the footer is the window's status bar */
+[data-skin="win95"] footer { border-top: 0; margin: 28px -16px 0; padding: 3px 4px; gap: 3px; background: #c0c0c0; box-shadow: inset 0 1px 0 #ffffff; }
+[data-skin="win95"] footer span { border: 1px solid; border-color: #808080 #ffffff #ffffff #808080; padding: 2px 8px; font-size: 12px; color: #000; flex: 1 1 auto; }
+
+/* chunky scrollbars where the browser lets a page style them (desktop Chrome, Edge, Safari) */
+[data-skin="win95"] ::-webkit-scrollbar { width: 16px; height: 16px; background: #dfdfdf; }
+[data-skin="win95"] ::-webkit-scrollbar-thumb { background: #c0c0c0; border: 2px solid; border-color: #ffffff #404040 #404040 #ffffff; }
+[data-skin="win95"] ::-webkit-scrollbar-corner { background: #c0c0c0; }
+
+/* scoring groups */
+[data-skin="win95"] tr.bands th { color: #000; }
+[data-skin="win95"] .armbtn[disabled] { color: #808080; opacity: 1; border-style: solid; text-shadow: 1px 1px 0 #fff; }
+[data-skin="win95"] tr.s1kid td { background: #efefef; }
