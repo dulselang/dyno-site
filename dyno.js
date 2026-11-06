@@ -23,19 +23,19 @@ var Dyno = (function () {
   function hr(tag, cls, text) { var e = h(tag, cls); e.innerHTML = rich(text); return e; }
 
   // dots: "ok ok bad nd deg" -> coloured squares, one per judged run
-  function dots(spec) {
-    return '<span class="dots">' + spec.split(" ").map(function (d) { return '<i class="' + (d === "nd" ? "" : d) + '"></i>'; }).join("") + "</span>";
+  function dots(spec, words) {
+    return '<span class="dots">' + spec.split(" ").map(function (d) { return '<i class="' + (d === "nd" ? "" : d) + '"' + (words ? ' title="' + esc(words[d]) + '"' : "") + "></i>"; }).join("") + "</span>";
   }
-  function armLine(arm, spec, mark) {
+  function armLine(arm, spec, mark, words) {
     var reps = spec.split(" "), k = reps.filter(function (d) { return d === "ok" || d === "deg"; }).length;
     return '<div class="arm is-' + arm + '"><span class="who ' + arm + '" title="' + (arm === "c" ? "C" : "Dulse") + '"></span><span>' + k + "/" + reps.length +
-      (mark ? "<sup>" + mark + "</sup>" : "") + "</span>" + dots(spec) + "</div>";
+      (mark ? "<sup>" + mark + "</sup>" : "") + "</span>" + dots(spec, words) + "</div>";
   }
   function cellHtml(c) {
     if (!c) return '<span class="notrun">not run</span>';
     var out = "";
-    if (c.c) out += armLine("c", c.c, c.mark);
-    if (c.d) out += armLine("d", c.d, c.mark);
+    if (c.c) out += armLine("c", c.c, c.mark, c.words);
+    if (c.d) out += armLine("d", c.d, c.mark, c.words);
     if (!c.c) out = '<span class="notrun is-c">no C run</span>' + out;
     return '<div class="cell" title="' + esc(c.src) + '">' + out + "</div>";
   }
@@ -88,7 +88,7 @@ var Dyno = (function () {
   function venueTag(v) { return '<span class="venue">' + (v === "sim" ? "in the simulator" : "on the rig") + "</span>"; }
   // what a route's dollars are, from 'How runs are judged' on the front page
   function costKind(route) {
-    return route === "Direct" ? "what the CLI reports at list prices, not a bill" : route === "Codex" ? "tokens at list prices" : "what the route charged";
+    return route === "Direct" ? "what the CLI reports at list prices, not a measured charge" : route === "Codex" ? "tokens at list prices" : "what the route charged";
   }
   function hbWord(hb, k) { return !hb ? '<span class="notrun">not scored</span>' : hb.none ? '<span class="notrun">' + esc(hb.none) + "</span>" : esc(hb[k]); }
   function hbTitle(hb) { return hb && hb.why ? ' title="' + esc(hb.why) + '"' : ""; }
@@ -366,7 +366,7 @@ var Dyno = (function () {
     var a = h("a", "morelink", text + (d.page_built ? " →" : " → (page not built yet)")); a.href = d.page_built ? d.page : "#" + d.id; return a;
   }
   // the simulated pendulum's tables, from the S1 sweep's records. Levels here don't go beside the rig's, see HANDOFF.md
-  var S1_KIND = { "list-cli": "what the CLI reports at list prices, not a bill", "list-computed": "tokens at list prices", charged: "what the route charged" };
+  var S1_KIND = { "list-cli": "what the CLI reports at list prices, not a measured charge", "list-computed": "tokens at list prices", charged: "what the route charged" };
   function s1Who(r) { return '<a href="models.html#' + r.model + '">' + esc(model(r.model).label) + "</a><small>" + esc(r.route) + "</small>"; }
   function s1Sort(a, b) { return b.level - a.level || (a.wall_min || 1e9) - (b.wall_min || 1e9); }
   // front page: best run per model from the empty folder, the same shape as the rig's table
@@ -726,7 +726,7 @@ var Dyno = (function () {
     data.demos.forEach(function (d) {
       (d.cells || []).filter(function (c) { return c.c && c.d; }).forEach(function (c) {
         var tk = d.tasks.filter(function (x) { return x.id === c.task; })[0], tr = h("tr");
-        tr.innerHTML = "<td>" + esc(d.title) + "</td><td>" + esc(tk.title) + "</td><td>" + esc(model(c.model).label) + "</td><td>" + armLine("c", c.c) + "</td><td>" + armLine("d", c.d, c.mark) + '</td><td class="src">' + esc(c.src) + "</td>";
+        tr.innerHTML = "<td>" + esc(d.title) + "</td><td>" + esc(tk.title) + "</td><td>" + esc(model(c.model).label) + "</td><td>" + armLine("c", c.c, null, c.words) + "</td><td>" + armLine("d", c.d, c.mark, c.words) + '</td><td class="src">' + esc(c.src) + "</td>";
         tb.appendChild(tr);
       });
       var seen = {};
@@ -1075,14 +1075,15 @@ var Dyno = (function () {
   function skinSwitcher() {
     var bar = document.querySelector(".bar"); if (!bar) return;
     var wrap = h("div", "skins"); wrap.appendChild(h("span", null, "Look"));
-    function set(v) {
+    function set(v, chosen) {
       if (v) document.documentElement.setAttribute("data-skin", v); else document.documentElement.removeAttribute("data-skin");
-      try { localStorage.setItem("dyno-skin", v); } catch (e) {}
+      // only a click is a choice, so someone who never picks follows the default
+      if (chosen) { try { localStorage.setItem("dyno-skin", v); } catch (e) {} }
       Array.prototype.forEach.call(wrap.querySelectorAll("button"), function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-skin") === v ? "true" : "false"); });
     }
     SKINS.forEach(function (sk) {
       var b = h("button", "armbtn", sk[1]); b.type = "button"; b.setAttribute("data-skin", sk[0]);
-      b.addEventListener("click", function () { set(sk[0]); });
+      b.addEventListener("click", function () { set(sk[0], true); });
       wrap.appendChild(b);
     });
     bar.appendChild(wrap);
