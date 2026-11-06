@@ -281,7 +281,8 @@ var Dyno = (function () {
     items.forEach(function (it) { var s = h("span"); var i = h("i"); i.style.background = it[0]; s.appendChild(i); s.appendChild(document.createTextNode(" " + it[1])); l.appendChild(s); });
     return l;
   }
-  function dotLegend() {
+  function dotLegend(d) {
+    if (d && d.state_words) return legend([["var(--arm-c)", "C"], ["var(--arm-d)", "Dulse"], ["var(--ok)", d.state_words.ok], ["var(--bad)", d.state_words.bad], ["var(--nd)", d.state_words.nd]]);
     return legend([["var(--arm-c)", "C"], ["var(--arm-d)", "Dulse"], ["var(--ok)", "pass"], ["var(--deg)", "pass, degraded"], ["var(--bad)", "broke it"], ["var(--nd)", "not done"]]);
   }
 
@@ -459,21 +460,6 @@ var Dyno = (function () {
         var ladder = h("p", "cap ladderline"); ladder.innerHTML = d.levels.slice(1).map(function (l) { return "<b>L" + l.id + "</b> " + esc(l.text); }).join(" · ");
         right.appendChild(ladder);
         right.appendChild(more(d, "All " + rows.length + " runs, the replay and the judge's rules"));
-      } else if (d.scale === "plan") {
-        // a bench still being tested: what's planned, and a table with nothing in it until there are verdicts
-        left.appendChild(facts(d));
-        var pl = h("ul", "tasks");
-        d.plan.tasks.forEach(function (tk) { var li = h("li"); li.innerHTML = "<b>" + esc(tk.title) + ".</b> " + rich(tk.text); pl.appendChild(li); });
-        left.appendChild(pl);
-        var pt = h("table", "matrix"), ptb = h("tbody");
-        pt.innerHTML = "<thead><tr><th>Model" + venueTag(d.venue) + "</th>" + d.plan.tasks.map(function (tk) { return "<th>" + esc(tk.title) + "</th>"; }).join("") + "</tr></thead>";
-        d.plan.models.forEach(function (k) {
-          var tr = h("tr");
-          tr.innerHTML = '<th class="model"><a href="models.html#' + k + '">' + esc(model(k).label) + "</a></th>" + d.plan.tasks.map(function () { return '<td><span class="notrun">testing</span></td>'; }).join("");
-          ptb.appendChild(tr);
-        });
-        pt.appendChild(ptb);
-        add(right, scrollx(pt), h("p", "cap", d.plan.note));
       } else if (d.scale === "todo") {
         // a bench with no results yet: its title bar and one line, nothing else
       } else if (d.scale === "sim") {
@@ -501,7 +487,7 @@ var Dyno = (function () {
         }
         add(right, armsToggle(sec, "c"));
         add(right, scrollx(d.scale === "scores" ? scoreTable(d) : matrix(d)));
-        add(right, d.scale === "scores" ? legend([["var(--arm-c)", "C"], ["var(--arm-d)", "Dulse"], ["var(--fg)", "scored ticket passed, of 5"]]) : dotLegend());
+        add(right, d.scale === "scores" ? legend([["var(--arm-c)", "C"], ["var(--arm-d)", "Dulse"], ["var(--fg)", "scored ticket passed, of 5"]]) : dotLegend(d));
         if (d.impossible) {
           var il = h("ul", "imposs");
           d.impossible.forEach(function (x) { var li = h("li"); li.appendChild(document.createTextNode(x.text + " ")); li.appendChild(srcLine(x.src)); il.appendChild(li); });
@@ -1030,6 +1016,58 @@ var Dyno = (function () {
     $("sources").appendChild(srcLine(d.sources.join(" · ")));
   }
 
+  // ---------- security subpage ----------
+  function secRunTable(d, taskId) {
+    var t = h("table", "board runs2");
+    t.innerHTML = "<thead>" + bandRow([["", 1], ["Results · Works", 2], ["Cost", 2], ["", 1]]) + "<tr><th>Model" + venueTag(d.venue) + "</th><th>Result</th><th>Why</th><th class='num'>Time</th><th class='num'>Cost</th><th>Also found, not counted</th></tr></thead>";
+    var tb = h("tbody");
+    d.runs.filter(function (r) { return r.task === taskId; }).sort(function (a, b) {
+      return (a.arm > b.arm ? 1 : a.arm < b.arm ? -1 : 0) || data.model_order.indexOf(a.model) - data.model_order.indexOf(b.model) || (a.id > b.id ? 1 : -1);
+    }).forEach(function (r) {
+      var why = r.found.slice();
+      if (!r.built) why.push("didn't build or refused");
+      if (r.functional_fail.length) why.push("failed " + r.functional_fail.join(", "));
+      var tr = h("tr", "is-" + r.arm);
+      tr.innerHTML = '<td><a href="models.html#' + r.model + '">' + esc(model(r.model).label) + "</a>" + (r.arm === "d" ? ' <span class="chip lang">Dulse</span>' : "") + "<small>" + esc(r.id) + "</small></td>" +
+        '<td><span class="dots"><i class="' + (r.state === "nd" ? "" : r.state) + '"></i></span> ' + esc(r.verdict) + '</td><td class="note">' + esc(why.join("; ")) + '</td><td class="num">' + (r.wall_min == null ? "" : r.wall_min.toFixed(1) + " min") + '</td><td class="num" title="' + esc(r.usd_kind) + '">' + (r.usd == null ? "" : usd(r.usd)) + '</td><td class="note" title="' + esc(r.src) + '">' + esc(r.other.join(", ")) + "</td>";
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    return t;
+  }
+  function renderSecurity() {
+    var d = demo("security"), sec = $("page");
+    $("status").textContent = d.one_line + " " + d.status;
+    $("rig").innerHTML = rich(d.rig); $("task").innerHTML = rich(d.task); $("judge").innerHTML = rich(d.judge);
+    $("armsbox").appendChild(armsToggle(sec, "both"));
+    $("all").appendChild(scrollx(matrix(d)));
+    $("all").appendChild(dotLegend(d));
+    var root = $("tasks");
+    d.tasks.forEach(function (tk) {
+      var s = h("section", "taskblock"); s.id = tk.id;
+      var head = h("header"); add(head, h("h2", null, tk.title), hr("p", null, tk.text)); s.appendChild(head);
+      var two = h("div", "two tk"), left = h("div"), right = h("div");
+      add(left, h("div", "eyebrow", "The ticket, as the model got it"));
+      var q = h("blockquote", "ticket2"); q.textContent = tk.ticket; left.appendChild(q);
+      left.appendChild(srcLine(tk.ticket_src));
+      add(right, hr("p", "breaks", "The catch: " + tk.hazard), h("div", "eyebrow", "Safe of 6"), scrollx(matrix({ venue: d.venue, tasks: [tk], cells: d.cells.filter(function (c) { return c.task === tk.id; }) })));
+      add(two, left, right); s.appendChild(two);
+      var more = document.createElement("details"), sum = document.createElement("summary"), w = h("div", "tablewrap");
+      sum.textContent = "Every run (" + d.runs.filter(function (r) { return r.task === tk.id; }).length + ")";
+      w.appendChild(secRunTable(d, tk.id)); add(more, sum, w); s.appendChild(more);
+      root.appendChild(s);
+    });
+    [["hw", d.hw], ["stated", d.stated], ["unlabeled", d.unlabeled]].forEach(function (p) {
+      $(p[0] + "title").textContent = p[1].title; $(p[0] + "text").innerHTML = rich(p[1].text);
+      plainTable($(p[0] + "table"), p[1]); $(p[0] + "src").appendChild(srcLine(p[1].src));
+    });
+    d.hw.notes.forEach(function (n) { $("hwnotes").appendChild(hr("p", null, n)); });
+    d.against.forEach(function (c) { var card = h("div", "card"); add(card, h("h3", null, c.title), hr("p", null, c.text), srcLine(c.src)); $("against").appendChild(card); });
+    d.gotchas.forEach(function (n) { $("gotchas").insertBefore(hr("p", null, n), $("sources")); });
+    $("breaks").innerHTML = rich(d.breaks.text + " "); $("breaks").appendChild(srcLine(d.breaks.src));
+    $("sources").appendChild(srcLine(d.sources.join(" · ")));
+  }
+
   // ---------- looks ----------
   // The 'Look' buttons in the top bar. The choice is data-skin on <html>, restyled by skins.css, and kept
   // in localStorage. The small script in each page's head applies it before the page draws.
@@ -1053,7 +1091,7 @@ var Dyno = (function () {
     set(SKINS.some(function (sk) { return sk[0] === cur; }) ? cur : "");
   }
 
-  var pages = { servo: renderServo, rcloop: renderRcloop, pendchange: renderPendchange, index: renderIndex, swingup: renderSwingup, swingupsim: renderSwingupSim, results: renderResults, models: renderModels, compare: renderCompare };
+  var pages = { servo: renderServo, rcloop: renderRcloop, pendchange: renderPendchange, security: renderSecurity, index: renderIndex, swingup: renderSwingup, swingupsim: renderSwingupSim, results: renderResults, models: renderModels, compare: renderCompare };
   return {
     data: data,
     page: function (name) {
